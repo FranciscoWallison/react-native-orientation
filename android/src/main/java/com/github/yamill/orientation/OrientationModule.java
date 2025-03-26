@@ -152,11 +152,19 @@ public class OrientationModule extends ReactContextBaseJavaModule implements Lif
         }
         // activity.registerReceiver(receiver, new IntentFilter("onConfigurationChanged"));
         IntentFilter filter = new IntentFilter("onConfigurationChanged");
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            activity.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            activity.registerReceiver(receiver, filter);
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                // Usar reflexão para evitar erro de compilação com SDK < 33
+                Context.class
+                    .getMethod("registerReceiver", BroadcastReceiver.class, IntentFilter.class, int.class)
+                    .invoke(activity, receiver, filter, 2); // 2 = RECEIVER_NOT_EXPORTED
+            } else {
+                activity.registerReceiver(receiver, filter);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
 
     }
     @Override
